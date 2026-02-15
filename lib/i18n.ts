@@ -55,14 +55,14 @@ const translations: Record<ResolvedLanguage, TranslationMap> = {
   en: {
     "tab.home": "Home",
     "tab.settings": "Settings",
-    "home.title": "LAN Video Call",
+    "home.title": "Video Call",
     "home.joinCall": "Join Call",
     "home.room": "Room",
-    "home.note": "Set Server URL in Settings tab. Keep same room on both phones.",
+    "home.note": "Set signaling URL in Settings. Use the same room on both phones.",
     "call.waitingRemoteVideo": "Waiting for remote video...",
     "settings.title": "Settings",
     "settings.serverUrlLabel": "Signaling Server URL",
-    "settings.serverHelp": "Use your computer local IP on the same Wi-Fi. Default: {defaultUrl}",
+    "settings.serverHelp": "Use ws:// for local Wi-Fi or wss:// for hosted server. Default: {defaultUrl}",
     "settings.save": "Save",
     "settings.saved": "Saved",
     "settings.languageLabel": "Language",
@@ -103,14 +103,14 @@ const translations: Record<ResolvedLanguage, TranslationMap> = {
   de: {
     "tab.home": "Start",
     "tab.settings": "Einstellungen",
-    "home.title": "LAN-Videoanruf",
+    "home.title": "Videoanruf",
     "home.joinCall": "Anruf starten",
     "home.room": "Raum",
     "home.note": "Server-URL im Einstellungs-Tab setzen. Auf beiden Handys denselben Raum verwenden.",
     "call.waitingRemoteVideo": "Warte auf Remote-Video...",
     "settings.title": "Einstellungen",
     "settings.serverUrlLabel": "Signalisierungsserver-URL",
-    "settings.serverHelp": "Nutze die lokale IP deines Computers im selben WLAN. Standard: {defaultUrl}",
+    "settings.serverHelp": "Nutze ws:// im WLAN oder wss:// auf einem Server. Standard: {defaultUrl}",
     "settings.save": "Speichern",
     "settings.saved": "Gespeichert",
     "settings.languageLabel": "Sprache",
@@ -151,14 +151,14 @@ const translations: Record<ResolvedLanguage, TranslationMap> = {
   ru: {
     "tab.home": "Главная",
     "tab.settings": "Настройки",
-    "home.title": "LAN видеозвонок",
+    "home.title": "Видеозвонок",
     "home.joinCall": "Подключиться",
     "home.room": "Комната",
     "home.note": "Укажите URL сервера на вкладке настроек. На обоих телефонах должна быть одинаковая комната.",
     "call.waitingRemoteVideo": "Ожидание удаленного видео...",
     "settings.title": "Настройки",
     "settings.serverUrlLabel": "URL сигнального сервера",
-    "settings.serverHelp": "Используйте локальный IP компьютера в той же Wi-Fi сети. По умолчанию: {defaultUrl}",
+    "settings.serverHelp": "Используйте ws:// в локальной сети или wss:// на сервере. По умолчанию: {defaultUrl}",
     "settings.save": "Сохранить",
     "settings.saved": "Сохранено",
     "settings.languageLabel": "Язык",
@@ -222,4 +222,3 @@ export function t(language: AppLanguage, key: TranslationKey, vars?: Record<stri
   const template = translations[resolved][key];
   return interpolate(template, vars);
 }
-

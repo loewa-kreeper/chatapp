@@ -11,9 +11,8 @@ import {
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import {
-  DEFAULT_SIGNALING_HOST,
-  DEFAULT_SIGNALING_PORT,
   DEFAULT_SIGNALING_URL,
+  normalizeSignalingUrl,
   useAppSettings,
 } from "../../lib/appSettings";
 import { AppLanguage, resolveLanguage, t } from "../../lib/i18n";
@@ -29,7 +28,8 @@ export default function SettingsScreen() {
   }, [settings.serverUrl]);
 
   const save = () => {
-    setAppSettings({ serverUrl: serverUrl.trim() });
+    const normalized = normalizeSignalingUrl(serverUrl) || serverUrl.trim();
+    setAppSettings({ serverUrl: normalized });
     setSaved(true);
     setTimeout(() => setSaved(false), 1200);
   };
@@ -65,7 +65,7 @@ export default function SettingsScreen() {
           />
           <Text style={styles.help}>
             {t(settings.language, "settings.serverHelp", {
-              defaultUrl: `ws://${DEFAULT_SIGNALING_HOST}:${DEFAULT_SIGNALING_PORT}`,
+              defaultUrl: DEFAULT_SIGNALING_URL,
             })}
           </Text>
 

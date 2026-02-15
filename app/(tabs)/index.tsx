@@ -23,7 +23,7 @@ import {
   RTCSessionDescription,
   RTCView,
 } from "react-native-webrtc";
-import { useAppSettings } from "../../lib/appSettings";
+import { normalizeSignalingUrl, useAppSettings } from "../../lib/appSettings";
 import { t } from "../../lib/i18n";
 import { APP_GRADIENT_COLORS, APP_GRADIENT_END, APP_GRADIENT_START } from "../../lib/theme";
 
@@ -37,8 +37,43 @@ type SignalMessage =
   | { type: "room-full" }
   | { type: "error"; message: string };
 
+function parseCsv(value: string | undefined) {
+  return (value || "")
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function buildIceServers(): RTCConfiguration["iceServers"] {
+  const stunUrls = parseCsv(process.env.EXPO_PUBLIC_STUN_URLS).filter((url) => url.startsWith("stun:"));
+  const turnUrls = parseCsv(process.env.EXPO_PUBLIC_TURN_URLS).filter((url) =>
+    /^(turn:|turns:)/.test(url)
+  );
+  const turnUsername = process.env.EXPO_PUBLIC_TURN_USERNAME?.trim();
+  const turnCredential = process.env.EXPO_PUBLIC_TURN_CREDENTIAL?.trim();
+
+  const iceServers: RTCConfiguration["iceServers"] = [];
+  for (const url of stunUrls) {
+    iceServers.push({ urls: url });
+  }
+
+  if (turnUrls.length && turnUsername && turnCredential) {
+    iceServers.push({
+      urls: turnUrls,
+      username: turnUsername,
+      credential: turnCredential,
+    });
+  }
+
+  if (!iceServers.length) {
+    return [{ urls: "stun:stun.l.google.com:19302" }];
+  }
+
+  return iceServers;
+}
+
 const ICE_SERVERS: RTCConfiguration = {
-  iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+  iceServers: buildIceServers(),
 };
 
 export default function HomeScreen() {
@@ -248,7 +283,7 @@ export default function HomeScreen() {
   }, [closePeerConnection, sendSignal, stopLocalMedia, tr]);
 
   const connect = useCallback(async () => {
-    const serverUrl = settings.serverUrl.trim();
+    const serverUrl = normalizeSignalingUrl(settings.serverUrl);
 
     if (!serverUrl) {
       Alert.alert(tr("alert.setServerTitle"), tr("alert.setServerMessage"));

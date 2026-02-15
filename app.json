@@ -13,7 +13,8 @@
       "infoPlist": {
         "NSCameraUsageDescription": "Allow camera access for video calls.",
         "NSMicrophoneUsageDescription": "Allow microphone access for voice calls."
-      }
+      },
+      "bundleIdentifier": "com.wadissimo.chatapp"
     },
     "android": {
       "adaptiveIcon": {
@@ -24,11 +25,8 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.anonymous.chatapp",
-      "permissions": [
-        "CAMERA",
-        "RECORD_AUDIO"
-      ]
+      "package": "com.wadissimo.chatapp",
+      "permissions": ["CAMERA", "RECORD_AUDIO"]
     },
     "web": {
       "output": "static",
