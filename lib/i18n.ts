@@ -7,6 +7,8 @@ type TranslationKey =
   | "home.title"
   | "home.joinCall"
   | "home.room"
+  | "home.generateCode"
+  | "home.copyCode"
   | "home.note"
   | "call.waitingRemoteVideo"
   | "settings.title"
@@ -27,6 +29,8 @@ type TranslationKey =
   | "alert.permissionsMessage"
   | "alert.roomFullTitle"
   | "alert.roomFullMessage"
+  | "alert.roomCopiedTitle"
+  | "alert.roomCopiedMessage"
   | "status.ready"
   | "status.disconnected"
   | "status.openingSocket"
@@ -58,6 +62,8 @@ const translations: Record<ResolvedLanguage, TranslationMap> = {
     "home.title": "Video Call",
     "home.joinCall": "Join Call",
     "home.room": "Room",
+    "home.generateCode": "Generate",
+    "home.copyCode": "Copy",
     "home.note": "Set signaling URL in Settings. Use the same room on both phones.",
     "call.waitingRemoteVideo": "Waiting for remote video...",
     "settings.title": "Settings",
@@ -78,6 +84,8 @@ const translations: Record<ResolvedLanguage, TranslationMap> = {
     "alert.permissionsMessage": "Camera and microphone permissions are required.",
     "alert.roomFullTitle": "Room full",
     "alert.roomFullMessage": "This room already has 2 people.",
+    "alert.roomCopiedTitle": "Copied",
+    "alert.roomCopiedMessage": "Room code copied to clipboard.",
     "status.ready": "Ready",
     "status.disconnected": "Disconnected",
     "status.openingSocket": "Opening socket...",
@@ -106,6 +114,8 @@ const translations: Record<ResolvedLanguage, TranslationMap> = {
     "home.title": "Videoanruf",
     "home.joinCall": "Anruf starten",
     "home.room": "Raum",
+    "home.generateCode": "Generieren",
+    "home.copyCode": "Kopieren",
     "home.note": "Server-URL im Einstellungs-Tab setzen. Auf beiden Handys denselben Raum verwenden.",
     "call.waitingRemoteVideo": "Warte auf Remote-Video...",
     "settings.title": "Einstellungen",
@@ -126,6 +136,8 @@ const translations: Record<ResolvedLanguage, TranslationMap> = {
     "alert.permissionsMessage": "Kamera- und Mikrofonberechtigungen sind erforderlich.",
     "alert.roomFullTitle": "Raum voll",
     "alert.roomFullMessage": "Dieser Raum hat bereits 2 Personen.",
+    "alert.roomCopiedTitle": "Kopiert",
+    "alert.roomCopiedMessage": "Raumcode wurde in die Zwischenablage kopiert.",
     "status.ready": "Bereit",
     "status.disconnected": "Getrennt",
     "status.openingSocket": "Socket wird geöffnet...",
@@ -154,6 +166,8 @@ const translations: Record<ResolvedLanguage, TranslationMap> = {
     "home.title": "Видеозвонок",
     "home.joinCall": "Подключиться",
     "home.room": "Комната",
+    "home.generateCode": "Генерировать",
+    "home.copyCode": "Копировать",
     "home.note": "Укажите URL сервера на вкладке настроек. На обоих телефонах должна быть одинаковая комната.",
     "call.waitingRemoteVideo": "Ожидание удаленного видео...",
     "settings.title": "Настройки",
@@ -174,6 +188,8 @@ const translations: Record<ResolvedLanguage, TranslationMap> = {
     "alert.permissionsMessage": "Требуются разрешения на камеру и микрофон.",
     "alert.roomFullTitle": "Комната заполнена",
     "alert.roomFullMessage": "В этой комнате уже 2 человека.",
+    "alert.roomCopiedTitle": "Скопировано",
+    "alert.roomCopiedMessage": "Код комнаты скопирован в буфер обмена.",
     "status.ready": "Готово",
     "status.disconnected": "Отключено",
     "status.openingSocket": "Открываем socket...",

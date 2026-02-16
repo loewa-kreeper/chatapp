@@ -15,6 +15,7 @@ import {
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
+import * as Clipboard from "expo-clipboard";
 import {
   mediaDevices,
   MediaStream,
@@ -78,19 +79,42 @@ const ICE_SERVERS: RTCConfiguration = {
 
 export default function HomeScreen() {
   const { settings } = useAppSettings();
+  type StatusKey = Parameters<typeof t>[1];
   const tr = useCallback(
     (key: Parameters<typeof t>[1], vars?: Record<string, string>) => t(settings.language, key, vars),
     [settings.language]
   );
 
   const [roomId, setRoomId] = useState("family-room");
-  const [status, setStatus] = useState(tr("status.ready"));
+  const [status, setStatus] = useState<{ key: StatusKey; vars?: Record<string, string>; fallback?: string }>({
+    key: "status.ready",
+  });
   const [connected, setConnected] = useState(false);
   const [micEnabled, setMicEnabled] = useState(true);
   const [camEnabled, setCamEnabled] = useState(true);
 
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
+  const statusText = status.fallback ?? tr(status.key, status.vars);
+
+  const setStatusKey = useCallback((key: StatusKey, vars?: Record<string, string>) => {
+    setStatus({ key, vars });
+  }, []);
+
+  const generateRoomId = useCallback(() => {
+    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    let code = "";
+    for (let i = 0; i < 6; i += 1) {
+      code += chars[Math.floor(Math.random() * chars.length)];
+    }
+    setRoomId(code);
+  }, []);
+
+  const copyRoomId = useCallback(async () => {
+    if (!roomId.trim()) return;
+    await Clipboard.setStringAsync(roomId.trim());
+    Alert.alert(tr("alert.roomCopiedTitle"), tr("alert.roomCopiedMessage"));
+  }, [roomId, tr]);
 
   const socketRef = useRef<WebSocket | null>(null);
   const pcRef = useRef<RTCPeerConnection | null>(null);
@@ -179,15 +203,15 @@ export default function HomeScreen() {
 
     pc.onconnectionstatechange = () => {
       const state = pc.connectionState;
-      if (state === "connected") setStatus(tr("status.callConnected"));
+      if (state === "connected") setStatusKey("status.callConnected");
       if (["disconnected", "failed", "closed"].includes(state)) {
-        setStatus(tr("status.connectionState", { state }));
+        setStatusKey("status.connectionState", { state });
       }
     };
 
     pcRef.current = pc;
     return pc;
-  }, [sendSignal, tr]);
+  }, [sendSignal, setStatusKey]);
 
   const flushPendingIce = useCallback(async () => {
     const pc = pcRef.current;
@@ -200,10 +224,10 @@ export default function HomeScreen() {
       try {
         await pc.addIceCandidate(new RTCIceCandidate(candidate));
       } catch {
-        setStatus(tr("status.failedApplyQueuedIce"));
+        setStatusKey("status.failedApplyQueuedIce");
       }
     }
-  }, [tr]);
+  }, [setStatusKey]);
 
   const createAndSendOffer = useCallback(async () => {
     try {
@@ -211,11 +235,11 @@ export default function HomeScreen() {
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
       sendSignal({ type: "offer", sdp: offer });
-      setStatus(tr("status.offerSent"));
+      setStatusKey("status.offerSent");
     } catch {
-      setStatus(tr("status.failedCreateOffer"));
+      setStatusKey("status.failedCreateOffer");
     }
-  }, [createPeerConnection, sendSignal, tr]);
+  }, [createPeerConnection, sendSignal, setStatusKey]);
 
   const handleOffer = useCallback(
     async (sdp: RTCSessionDescriptionInit) => {
@@ -226,12 +250,12 @@ export default function HomeScreen() {
         const answer = await pc.createAnswer();
         await pc.setLocalDescription(answer);
         sendSignal({ type: "answer", sdp: answer });
-        setStatus(tr("status.answerSent"));
+        setStatusKey("status.answerSent");
       } catch {
-        setStatus(tr("status.failedHandleOffer"));
+        setStatusKey("status.failedHandleOffer");
       }
     },
-    [createPeerConnection, flushPendingIce, sendSignal, tr]
+    [createPeerConnection, flushPendingIce, sendSignal, setStatusKey]
   );
 
   const handleAnswer = useCallback(
@@ -240,12 +264,12 @@ export default function HomeScreen() {
         const pc = createPeerConnection();
         await pc.setRemoteDescription(new RTCSessionDescription(sdp));
         await flushPendingIce();
-        setStatus(tr("status.answerReceived"));
+        setStatusKey("status.answerReceived");
       } catch {
-        setStatus(tr("status.failedApplyAnswer"));
+        setStatusKey("status.failedApplyAnswer");
       }
     },
-    [createPeerConnection, flushPendingIce, tr]
+    [createPeerConnection, flushPendingIce, setStatusKey]
   );
 
   const handleIce = useCallback(async (candidate: RTCIceCandidateInit) => {
@@ -258,9 +282,9 @@ export default function HomeScreen() {
     try {
       await pc.addIceCandidate(new RTCIceCandidate(candidate));
     } catch {
-      setStatus(tr("status.failedAddIce"));
+      setStatusKey("status.failedAddIce");
     }
-  }, [tr]);
+  }, [setStatusKey]);
 
   const disconnect = useCallback(() => {
     sendSignal({ type: "leave" });
@@ -279,8 +303,8 @@ export default function HomeScreen() {
     stopLocalMedia();
     isHostRef.current = false;
     setConnected(false);
-    setStatus(tr("status.disconnected"));
-  }, [closePeerConnection, sendSignal, stopLocalMedia, tr]);
+    setStatusKey("status.disconnected");
+  }, [closePeerConnection, sendSignal, setStatusKey, stopLocalMedia]);
 
   const connect = useCallback(async () => {
     const serverUrl = normalizeSignalingUrl(settings.serverUrl);
@@ -314,14 +338,14 @@ export default function HomeScreen() {
 
       localStreamRef.current = stream;
       setLocalStream(stream);
-      setStatus(tr("status.openingSocket"));
+      setStatusKey("status.openingSocket");
 
       const socket = new WebSocket(serverUrl);
       socketRef.current = socket;
 
       socket.onopen = () => {
         socket.send(JSON.stringify({ type: "join", roomId: roomId.trim() }));
-        setStatus(tr("status.joinedWaitingPeer"));
+        setStatusKey("status.joinedWaitingPeer");
       };
 
       socket.onmessage = async (event) => {
@@ -335,12 +359,12 @@ export default function HomeScreen() {
         if (message.type === "joined") {
           isHostRef.current = message.isHost;
           setConnected(true);
-          setStatus(message.isHost ? tr("status.waitingSecondPerson") : tr("status.connectedToRoom"));
+          setStatusKey(message.isHost ? "status.waitingSecondPerson" : "status.connectedToRoom");
           return;
         }
 
         if (message.type === "peer-joined") {
-          setStatus(tr("status.peerJoinedStarting"));
+          setStatusKey("status.peerJoinedStarting");
           if (isHostRef.current) await createAndSendOffer();
           return;
         }
@@ -362,7 +386,7 @@ export default function HomeScreen() {
 
         if (message.type === "peer-left") {
           closePeerConnection();
-          setStatus(tr("status.peerLeftRoom"));
+          setStatusKey("status.peerLeftRoom");
           return;
         }
 
@@ -373,22 +397,22 @@ export default function HomeScreen() {
         }
 
         if (message.type === "error") {
-          setStatus(message.message);
+          setStatus({ key: "status.socketError", fallback: message.message });
         }
       };
 
       socket.onerror = () => {
-        setStatus(tr("status.socketError"));
+        setStatusKey("status.socketError");
         setConnected(false);
       };
 
       socket.onclose = () => {
-        setStatus(tr("status.socketClosed"));
+        setStatusKey("status.socketClosed");
         setConnected(false);
         closePeerConnection();
       };
     } catch {
-      setStatus(tr("status.failedInitMediaSocket"));
+      setStatusKey("status.failedInitMediaSocket");
       stopLocalMedia();
     }
   }, [
@@ -401,6 +425,7 @@ export default function HomeScreen() {
     requestMediaPermissions,
     roomId,
     settings.serverUrl,
+    setStatusKey,
     stopLocalMedia,
     tr,
   ]);
@@ -461,7 +486,7 @@ export default function HomeScreen() {
             end={{ x: 0, y: 1 }}
             style={styles.topOverlay}
           >
-            <Text style={styles.statusBadge}>{status}</Text>
+            <Text style={styles.statusBadge}>{statusText}</Text>
           </LinearGradient>
 
           {localStreamUrl ? (
@@ -519,7 +544,7 @@ export default function HomeScreen() {
       >
         <View style={styles.heroBlock}>
           <Text style={styles.title}>{tr("home.title")}</Text>
-          <Text style={styles.subtitle}>{status}</Text>
+          <Text style={styles.subtitle}>{statusText}</Text>
         </View>
 
         <View style={styles.card}>
@@ -532,6 +557,16 @@ export default function HomeScreen() {
             placeholderTextColor="#64748b"
             autoCapitalize="none"
           />
+          <View style={styles.roomActionsRow}>
+            <TouchableOpacity style={[styles.button, styles.secondaryButton]} onPress={generateRoomId}>
+              <Ionicons name="sparkles-outline" size={16} color="#e2e8f0" />
+              <Text style={styles.buttonText}>{tr("home.generateCode")}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.button, styles.secondaryButton]} onPress={copyRoomId}>
+              <Ionicons name="copy-outline" size={16} color="#e2e8f0" />
+              <Text style={styles.buttonText}>{tr("home.copyCode")}</Text>
+            </TouchableOpacity>
+          </View>
           <TouchableOpacity style={[styles.button, styles.connect]} onPress={connect}>
             <Text style={styles.buttonText}>{tr("home.joinCall")}</Text>
           </TouchableOpacity>
@@ -597,6 +632,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     alignItems: "center",
     justifyContent: "center",
+    flexDirection: "row",
+    gap: 8,
   },
   connect: {
     backgroundColor: "#0891b2",
@@ -604,6 +641,16 @@ const styles = StyleSheet.create({
   buttonText: {
     color: "#e2e8f0",
     fontWeight: "700",
+  },
+  roomActionsRow: {
+    flexDirection: "row",
+    gap: 10,
+  },
+  secondaryButton: {
+    backgroundColor: "rgba(15,23,42,0.8)",
+    borderWidth: 1,
+    borderColor: "#334155",
+    flex: 1,
   },
   callScreen: {
     flex: 1,
